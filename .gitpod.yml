@@ -1,4 +1,5 @@
-image: gitpod/workspace-python
+image:
+  file: .gitpod.Dockerfile
 
 tasks:
   - name: Install deps and enter shell
