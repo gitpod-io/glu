@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "glu"
+version = "0.1.0"
+description = ""
+authors = ["AXON <axonasif@gmail.com>"]
+license = "GPL-2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+asyncio = "^3.4.3"
+aiohttp = "^3.8.4"
+cachetools = "^5.3.0"
+gidgethub = "^5.2.1"
+pydantic = "^1.10.7"
+slack-sdk = "^3.21.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
