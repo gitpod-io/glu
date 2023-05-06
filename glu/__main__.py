@@ -1,16 +1,18 @@
 import sys
-# from asyncio import sleep as asyncio_sleep
 from traceback import print_exc as traceback_print_exc
 from aiohttp import (web, ClientSession)
 from aiohttp.web_request import Request
 from cachetools import LRUCache
 from gidgethub import (aiohttp as gh_aiohttp, routing, sansio)
-# from gidgethub.abc import GitHubAPI
 from gidgethub.apps import (get_installation_access_token)
-from . import watch_user_created
-from .config_loader import config
+import glu.events as event
+from glu.config_loader import config
 
-router = routing.Router(watch_user_created.router)
+router = routing.Router(
+    event.item_opened,
+    event.item_labeled,
+    event.item_comment,
+)
 cache = LRUCache(maxsize=500)
 
 
@@ -46,8 +48,6 @@ async def main(request: Request):
                 cache=cache
 
             )
-            # Give GitHub some time to reach internal consistency.
-            # await asyncio_sleep(1)
             await router.dispatch(event, gh_app, session=session)
             # jwt_token = get_jwt(
             #         app_id=app_id,
