@@ -1,3 +1,4 @@
+import sys
 import snscrape.modules.twitter as sntwitter
 from aiohttp import web
 from aiohttp.web_request import Request
@@ -28,7 +29,7 @@ async def handler(request: Request):
     # from re import search
     # tweet_id = search('/([0-9]+$)', tweet_url).group(1)
     tweet_id = json["id"]
-    print(f'Tweet ID: {tweet_id}')
+    print(f'Tweet ID: {tweet_id}', file=sys.stderr)
     tweet = get_tweet(id=tweet_id)
 
     # Ignore retweets
