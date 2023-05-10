@@ -20,8 +20,8 @@ async def item_labeled(
 ) -> None:
     """TODO
     """
-    if not await is_non_org_user(event, gh):
-        return
+    # if not await is_non_org_user(event, gh):
+    #     return
 
     label_id = str(event.data["label"]["id"])
     label_name = str(event.data["label"]["name"])
