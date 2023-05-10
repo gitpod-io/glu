@@ -35,10 +35,10 @@ async def item_labeled(
         if "watch_comments" in team and not team["watch_comments"]:
             continue
 
-        team_label = team["label_id_or_name"]
+        team_label = str(team["label_id_or_name"])
         for label in event.data["issue"]["labels"]:
-            label_id = label["id"]
-            label_name = label["name"]
+            label_id = str(label["id"])
+            label_name = str(label["name"])
 
             if label_id == team_label or label_name == team_label:
                 await slack.send_github_issue(

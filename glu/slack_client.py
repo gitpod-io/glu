@@ -58,7 +58,12 @@ async def send_github_issue(event: Event, channel: str, what: str) -> None:
 
     if item_body is not None:
         text = f'{item_body}\n\n_View it on <{item_url}|GitHub>_'
+        # text = f'_View it on <{item_url}|GitHub>_'
         await slack_client.chat_postMessage(
+            as_user=True,
+            link_names=False,
+            unfurl_links=False,
+            unfurl_media=False,
             username=slack_client.username,
             icon_emoji=slack_client.icon_emoji,
             channel=str(main_message["channel"]),

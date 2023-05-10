@@ -23,11 +23,11 @@ async def item_labeled(
     if not await is_non_org_user(event, gh):
         return
 
-    label_id = event.data["label"]["id"]
-    label_name = event.data["label"]["name"]
+    label_id = str(event.data["label"]["id"])
+    label_name = str(event.data["label"]["name"])
 
     for team in config["github"]["to_slack"]["user_activity"]["teams"]:
-        team_label = team["label_id_or_name"]
+        team_label = str(team["label_id_or_name"])
 
         if label_id == team_label or label_name == team_label:
             await slack.send_github_issue(
