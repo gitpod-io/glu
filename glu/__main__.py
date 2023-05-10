@@ -7,6 +7,7 @@ from gidgethub import (aiohttp as gh_aiohttp, routing, sansio)
 from gidgethub.apps import (get_installation_access_token)
 import glu.events as event
 from glu.config_loader import config
+from glu.twitter_filtered import handler as twitter_filtered
 
 router = routing.Router(
     event.item_opened,
@@ -65,6 +66,7 @@ async def main(request: Request):
 if __name__ == "__main__":
     app = web.Application()
     app.router.add_post("/", main)
+    app.router.add_post("/twitter_filtered", twitter_filtered)
     port = int(config["server"].get("port", 8000))
     host = str(config["server"].get("host", "127.0.0.1"))
     web.run_app(app, host=host, port=port)

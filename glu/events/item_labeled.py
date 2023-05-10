@@ -26,7 +26,7 @@ async def item_labeled(
     label_id = event.data["label"]["id"]
     label_name = event.data["label"]["name"]
 
-    for team in config["slack"]["github"]["user_activity"]["to_teams"]:
+    for team in config["github"]["to_slack"]["user_activity"]["teams"]:
         team_label = team["label_id_or_name"]
 
         if label_id == team_label or label_name == team_label:

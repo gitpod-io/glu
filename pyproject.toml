@@ -15,6 +15,7 @@ gidgethub = "^5.2.1"
 pydantic = "^1.10.7"
 slack-sdk = "^3.21.3"
 rich = "^13.3.5"
+snscrape = "^0.6.2.20230320"
 
 [build-system]
 requires = ["poetry-core"]

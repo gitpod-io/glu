@@ -2,7 +2,16 @@ from .config_loader import config
 from gidgethub.sansio import Event
 from html import unescape as html_unescape
 from slack_sdk.web.async_client import AsyncWebClient
-slack_client = AsyncWebClient(token=config["slack"]["api_token"])
+
+
+class CustomAsyncWebClient(AsyncWebClient):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.username: str = config["slack"]["username"]
+        self.icon_emoji: str = config["slack"]["icon_emoji"]
+
+
+slack_client = CustomAsyncWebClient(token=config["slack"]["api_token"])
 
 
 async def send_github_issue(event: Event, channel: str, what: str) -> None:
@@ -24,6 +33,8 @@ async def send_github_issue(event: Event, channel: str, what: str) -> None:
 
     # Main message
     main_message = await slack_client.chat_postMessage(
+        username=slack_client.username,
+        icon_emoji=slack_client.icon_emoji,
         channel=channel,
         text=f'{sender} {what}: {item_title}',
         blocks=[
@@ -48,6 +59,8 @@ async def send_github_issue(event: Event, channel: str, what: str) -> None:
     if item_body is not None:
         text = f'{item_body}\n\n_View it on <{item_url}|GitHub>_'
         await slack_client.chat_postMessage(
+            username=slack_client.username,
+            icon_emoji=slack_client.icon_emoji,
             channel=str(main_message["channel"]),
             thread_ts=main_message["ts"],
             text=f"{item_url} body",

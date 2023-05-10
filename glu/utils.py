@@ -1,3 +1,4 @@
+from os import environ
 from typing import Any
 from tomllib import load as toml_load
 from pathlib import Path
@@ -33,9 +34,11 @@ async def is_non_org_user(
     # Only send when sender is not one of the org members
     sender = event.data["sender"]["login"]
 
-    # if sender not in members:
-    if sender in members:
+    if environ.get("GLU_DEBUG"):
+        return True
+    elif sender not in members:
         # return (True, sender)
         return True
-    # return (False, None)
-    return False
+    else:
+        # return (False, None)
+        return False
