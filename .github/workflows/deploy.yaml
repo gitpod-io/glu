@@ -1,0 +1,23 @@
+name: Deploy to remote GCP VM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Run deploy script
+        env:
+          CONFIG_BASE64: ${{ secrets.CONFIG_BASE64 }}
+          SSH_LOGIN: ${{ secrets.SSH_LOGIN }}
+          SSH_PRIVATE_KEY_BASE64: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
+        run: ./scripts/deploy.sh
