@@ -52,8 +52,6 @@ EOF
   systemctl start "${systemd_service_name}"
 }
 
-set -x
-
 # Runs on host machine
 ##
 private_key=/tmp/.pkey
