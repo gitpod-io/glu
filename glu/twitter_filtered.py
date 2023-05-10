@@ -31,6 +31,10 @@ async def handler(request: Request):
     print(f'Tweet ID: {tweet_id}')
     tweet = get_tweet(id=tweet_id)
 
+    # Ignore retweets
+    if tweet_content.startswith("rt @"):
+        return web.Response(status=200)
+
     # First post in thread mentions @gitpod
     if tweet.inReplyToTweetId == None:
         # if not "@gitpod" in tweet.content.lower():
