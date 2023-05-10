@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eux
+set -eu
 
 # Required environment variables:
 ## CONFIG_BASE4
@@ -52,6 +52,7 @@ EOF
   systemctl start "${systemd_service_name}"
 }
 
+set -x
 
 # Runs on host machine
 ##
