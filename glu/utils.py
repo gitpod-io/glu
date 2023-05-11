@@ -14,14 +14,20 @@ def load_config(path: Path) -> dict[str, Any]:
     return config
 
 
+async def is_bot(event: Event) -> bool:
+    if str(event.data["sender"]["type"]) == "Bot":
+        return True
+    else:
+        return False
+
+
 async def is_non_org_user(
     event: Event, gh: GitHubAPI
 ) -> bool:
     # ) -> Tuple[bool, str | None]:
 
     # Only respond to real Users
-    if event.data["sender"]["type"] != "User":
-        # return (False, None)
+    if is_bot(event):
         return False
 
     # Get org members
