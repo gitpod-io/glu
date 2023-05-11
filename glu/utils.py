@@ -14,7 +14,7 @@ def load_config(path: Path) -> dict[str, Any]:
     return config
 
 
-async def is_bot(event: Event) -> bool:
+def is_bot(event: Event) -> bool:
     if str(event.data["sender"]["type"]) == "Bot":
         return True
     else:
