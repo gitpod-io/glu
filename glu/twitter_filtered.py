@@ -33,11 +33,12 @@ async def handler(request: Request):
 
     filtered_channel = config["twitter"]["to_slack"]["filtered_tweets_channel"]
     all_channel = config["twitter"]["to_slack"]["all_tweets_channel"]
-    await send_msg(tweet_url, all_channel)
 
     # Ignore retweets
     if tweet_content.startswith("rt @"):
         return web.Response(status=200)
+
+    await send_msg(tweet_url, all_channel)
 
     # First post in thread mentions @gitpod
     if tweet.inReplyToTweetId == None:
