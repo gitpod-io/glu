@@ -55,7 +55,7 @@ async def handler(request: Request):
             if "gitpod" in word:
                 count += 1
         # Reply mentions @gitpod
-        if "gitpod" not in main_tweet_content and count >= 1:
+        if "@gitpod" not in main_tweet_content and count >= 1:
             pass
         elif count <= 1:
             # return pd.flow.exit("Gitpod not mentioned in reply")
