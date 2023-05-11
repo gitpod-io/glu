@@ -47,7 +47,7 @@ async def handler(request: Request):
             return web.Response(status=500)
     else:
         main_tweet_content = get_tweet(
-            id=tweet.inReplyToTweetId).content.lower()
+            id=tweet.inReplyToTweetId).rawContent.lower()
         # if main_tweet_replies == 1:
         count = 0
         # for word in tweet.content.lower().split():
