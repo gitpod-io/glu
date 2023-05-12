@@ -25,17 +25,23 @@ async def handler(request: Request):
     json = await request.json()
     tweet_url = json["url"]
     tweet_content: str = json["full_text"].lower()
+    sender_username: str = json["user"]["screen_name"]
     # from re import search
     # tweet_id = search('/([0-9]+$)', tweet_url).group(1)
-    tweet_id = json["id"]
+    tweet_id = str(json["id_str"])
     print(f'Tweet ID: {tweet_id}', file=sys.stderr)
-    tweet = get_tweet(id=tweet_id)
 
+    tweet = get_tweet(id=tweet_id)
     filtered_channel = config["twitter"]["to_slack"]["filtered_tweets_channel"]
     all_channel = config["twitter"]["to_slack"]["all_tweets_channel"]
 
+    # ignore own tweets
+    if config["twitter"]["own_username"] == sender_username:
+        return web.Response(status=200)
+
     # Ignore retweets
-    if tweet_content.startswith("rt @"):
+    # if tweet_content.startswith("rt @"):
+    if json.get("retweeted_status") and tweet_content.startswith("rt @"):
         return web.Response(status=200)
 
     await send_msg(tweet_url, all_channel)
@@ -45,7 +51,7 @@ async def handler(request: Request):
         # if not "@gitpod" in tweet.content.lower():
         if "gitpod" not in tweet_content:
             # return pd.flow.exit("Gitpod not mentioned in main tweet")
-            return web.Response(status=500)
+            return web.Response(status=200)
     else:
         main_tweet_content = get_tweet(
             id=tweet.inReplyToTweetId).rawContent.lower()
@@ -60,7 +66,7 @@ async def handler(request: Request):
             pass
         elif count <= 1:
             # return pd.flow.exit("Gitpod not mentioned in reply")
-            return web.Response(status=500)
+            return web.Response(status=200)
         # else:
         #     if not "gitpod" in tweet.content.lower():
         #         return pd.flow.exit("Gitpod not mentioned")
