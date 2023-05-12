@@ -35,9 +35,9 @@ async def handler(request: Request):
     filtered_channel = config["twitter"]["to_slack"]["filtered_tweets_channel"]
     all_channel = config["twitter"]["to_slack"]["all_tweets_channel"]
 
-    # ignore own tweets
-    if config["twitter"]["own_username"] == sender_username:
-        return web.Response(status=200)
+    # # ignore own tweets
+    # if config["twitter"]["own_username"] == sender_username:
+    #     return web.Response(status=200)
 
     # Ignore retweets
     # if tweet_content.startswith("rt @"):
