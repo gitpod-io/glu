@@ -6,7 +6,7 @@ from aiohttp import ClientSession
 from gidgethub.sansio import Event
 from gidgethub.abc import GitHubAPI
 from glu.config_loader import config
-from glu.utils import is_non_org_user
+from glu.utils import is_non_org_and_bot_user
 import glu.slack_client as slack
 router = gidgethub.routing.Router()
 
@@ -21,7 +21,7 @@ async def item_opened(
 ) -> None:
     """TODO
     """
-    if await is_non_org_user(event, gh):
+    if await is_non_org_and_bot_user(event, gh):
         await slack.send_github_issue(
             event,
             config["github"]["to_slack"]["user_activity"]["all_channel_id"],

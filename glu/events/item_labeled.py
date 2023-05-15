@@ -5,7 +5,7 @@ from aiohttp import ClientSession
 from gidgethub.sansio import Event
 from gidgethub.abc import GitHubAPI
 from glu.config_loader import config
-from glu.utils import is_bot, is_non_org_user
+from glu.utils import is_bot, is_non_org_and_bot_user
 import glu.slack_client as slack
 router = gidgethub.routing.Router()
 

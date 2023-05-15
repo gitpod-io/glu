@@ -6,6 +6,15 @@ from gidgethub.sansio import Event
 from gidgethub.abc import GitHubAPI
 # from typing import Tuple
 
+# Some bots use a normal personal GitHub account to operate
+bot_users = frozenset({
+    "roboquat",
+    "incident-io[bot]",
+    "werft-gitpod-dev-com[bot]",
+    "autofix-bot",
+    "dependabot[bot]",
+})
+
 
 def load_config(path: Path) -> dict[str, Any]:
     config_file = open(path, "rb")
@@ -15,13 +24,14 @@ def load_config(path: Path) -> dict[str, Any]:
 
 
 def is_bot(event: Event) -> bool:
-    if str(event.data["sender"]["type"]) == "Bot":
+    if str(event.data["sender"]["type"]) == "Bot" \
+            or str(event.data["sender"]["login"]) in bot_users:
         return True
     else:
         return False
 
 
-async def is_non_org_user(
+async def is_non_org_and_bot_user(
     event: Event, gh: GitHubAPI
 ) -> bool:
     # ) -> Tuple[bool, str | None]:
