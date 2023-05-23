@@ -24,7 +24,7 @@ async def item_opened(
     if await is_non_org_and_bot_user(event, gh):
         await slack.send_github_issue(
             event,
-            config["github"]["to_slack"]["user_activity"]["all_channel_id"],
+            gh,
+            config["github"]["user_activity"]["to_slack"]["all_channel_id"],
             "created"
         )
-        # TODO: Auto label the issue/PR with GPT3.5

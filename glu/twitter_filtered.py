@@ -8,10 +8,11 @@ from glu.openai_client import openai
 
 
 async def is_feedback(tweet_content: str) -> bool:
-    ai_system_message = config["twitter"]["to_slack"]["feedback_detection"]["prompt"]
+    ai_system_message = config["twitter"]["mentions"]["to_slack"]["feedback_detection"]["system_prompt"]
 
     ai_response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        # model="gpt-3.5-turbo", # This also works well
+        model="gpt-4",
         messages=[
             {"role": "system", "content": ai_system_message},
             {"role": "user", "content": tweet_content}
@@ -51,9 +52,9 @@ async def handler(request: Request):
     print(f'Tweet ID: {tweet_id}', file=sys.stderr)
 
     tweet = get_tweet(id=tweet_id)
-    filtered_channel = config["twitter"]["to_slack"]["filtered_tweets_channel"]
-    all_channel = config["twitter"]["to_slack"]["all_tweets_channel"]
-    feedback_channel = config["twitter"]["to_slack"]["feedback_detection"]["channel"]
+    filtered_channel = config["twitter"]["mentions"]["to_slack"]["filtered_tweets_channel"]
+    all_channel = config["twitter"]["mentions"]["to_slack"]["all_tweets_channel"]
+    feedback_channel = config["twitter"]["mentions"]["to_slack"]["feedback_detection"]["channel"]
 
     # # ignore own tweets
     # sender_username: str = json["user"]["screen_name"]

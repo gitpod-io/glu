@@ -24,8 +24,17 @@ def load_config(path: Path) -> dict[str, Any]:
 
 
 def is_bot(event: Event) -> bool:
-    if str(event.data["sender"]["type"]) == "Bot" \
-            or str(event.data["sender"]["login"]) in bot_users:
+    from glu.config_loader import config
+
+    sender = str(event.data["sender"]["login"])
+    sender_type = str(event.data["sender"]["type"])
+    app_username = str(config["github"]["app_username"])
+
+    # Ignore self
+    if app_username == sender:
+        return False
+
+    if sender_type == "Bot" or sender in bot_users:
         return True
     else:
         return False

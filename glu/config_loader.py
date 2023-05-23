@@ -1,7 +1,7 @@
 import os
 import sys
 from pathlib import Path
-from . import utils
+import glu.utils as utils
 
 # Check if a command-line argument is provided
 if len(sys.argv) > 1:

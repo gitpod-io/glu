@@ -26,12 +26,13 @@ async def item_labeled(
     # Always send to team communit
     await slack.send_github_issue(
         event,
-        config["github"]["to_slack"]["user_activity"]["all_channel_id"],
+        gh,
+        config["github"]["user_activity"]["to_slack"]["all_channel_id"],
         "commented on"
     )
 
     # Then applicable teams
-    for team in config["github"]["to_slack"]["user_activity"]["teams"]:
+    for team in config["github"]["user_activity"]["to_slack"]["teams"]:
         if "watch_comments" in team and not team["watch_comments"]:
             continue
 
@@ -43,6 +44,7 @@ async def item_labeled(
             if label_id == team_label or label_name == team_label:
                 await slack.send_github_issue(
                     event,
+                    gh,
                     team["channel_id"],
                     "commented on"
                 )
