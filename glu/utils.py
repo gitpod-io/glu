@@ -23,16 +23,28 @@ def load_config(path: Path) -> dict[str, Any]:
     return config
 
 
-def is_bot(event: Event) -> bool:
-    from glu.config_loader import config
+def is_self(event: Event) -> bool:
+    from glu import runtime_constants
+    sender = str(event.data["sender"]["login"])
+    sender_type = str(event.data["sender"]["type"]).lower()
 
+    if runtime_constants.app_obj is None:
+        return False
+
+    app_username = str(runtime_constants.app_obj["slug"])
+
+    if sender_type == "bot":
+        app_username += "[bot]"
+
+    if app_username == sender:
+        return True
+    else:
+        return False
+
+
+def is_bot(event: Event) -> bool:
     sender = str(event.data["sender"]["login"])
     sender_type = str(event.data["sender"]["type"])
-    app_username = str(config["github"]["app_username"])
-
-    # Ignore self
-    if app_username == sender:
-        return False
 
     if sender_type == "Bot" or sender in bot_users:
         return True

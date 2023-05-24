@@ -4,10 +4,11 @@ from aiohttp import (web, ClientSession)
 from aiohttp.web_request import Request
 from cachetools import LRUCache
 from gidgethub import (aiohttp as gh_aiohttp, routing, sansio)
-from gidgethub.apps import (get_installation_access_token)
+from gidgethub.apps import (get_installation_access_token, get_jwt)
 import glu.events as event
 from glu.config_loader import config
 from glu.twitter_filtered import handler as twitter_filtered
+from glu import runtime_constants
 
 router = routing.Router(
     event.item_opened,
@@ -17,7 +18,7 @@ router = routing.Router(
 cache = LRUCache(maxsize=500)
 
 
-async def main(request: Request):
+async def github_payloads(request: Request):
     try:
         body = await request.read()
         webhook_secret = config["github"]["webhook_secret"]
@@ -49,13 +50,16 @@ async def main(request: Request):
                 cache=cache
 
             )
-            await router.dispatch(event, gh_app, session=session)
-            # jwt_token = get_jwt(
-            #         app_id=app_id,
-            #         private_key=config["github"]["private_key"],
-            # )
-            # print(await gh_app.getitem("/app", jwt=jwt_token))
 
+            if runtime_constants.app_obj is None:
+                jwt_token = get_jwt(
+                        app_id=app_id,
+                        private_key=config["github"]["private_key"],
+                )
+                resp = await gh_app.getitem("/app", jwt=jwt_token)
+                runtime_constants.app_obj = resp
+
+            await router.dispatch(event, gh_app, session=session)
             return web.Response(status=200)
 
     except Exception:
@@ -65,7 +69,7 @@ async def main(request: Request):
 
 if __name__ == "__main__":
     app = web.Application()
-    app.router.add_post("/", main)
+    app.router.add_post("/", github_payloads)
     app.router.add_post("/twitter_filtered", twitter_filtered)
     port = int(config["server"].get("port", 8000))
     host = str(config["server"].get("host", "127.0.0.1"))
