@@ -55,6 +55,7 @@ async def handler(request: Request):
     filtered_channel = config["twitter"]["mentions"]["to_slack"]["filtered_tweets_channel"]
     all_channel = config["twitter"]["mentions"]["to_slack"]["all_tweets_channel"]
     feedback_channel = config["twitter"]["mentions"]["to_slack"]["feedback_detection"]["channel"]
+    send_to_extra_feedback_channel: bool = config["twitter"]["mentions"]["to_slack"]["feedback_detection"]["send_to_extra_channel"]
 
     # # ignore own tweets
     # sender_username: str = json["user"]["screen_name"]
@@ -67,12 +68,12 @@ async def handler(request: Request):
         return web.Response(status=200)
 
     message = tweet_url
-    send_to_feedback_channel = False
+    feedback_detected = False
 
     try:
         if await is_feedback(tweet_content):
             message = f'*[Potential feedback]*: {tweet_url}'
-            send_to_feedback_channel = True
+            feedback_detected = True
     except:
         pass
 
@@ -103,7 +104,7 @@ async def handler(request: Request):
         #     if not "gitpod" in tweet.content.lower():
         #         return pd.flow.exit("Gitpod not mentioned")
 
-    if send_to_feedback_channel:
+    if send_to_extra_feedback_channel and feedback_detected:
         await send_msg(message, feedback_channel)
 
     await send_msg(message, filtered_channel)
