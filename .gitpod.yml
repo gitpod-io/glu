@@ -20,5 +20,5 @@ tasks:
       } fi
 
       printf '• %s\n' \
-        "You can modify the ${GITPOD_REPO_ROOT}/ProdBotConfig.toml as needed" \
-        "And, to push the new config to the prod server, run \`./scripts/deploy_gitpod.sh\`"
+        "You can modify the ${GITPOD_REPO_ROOT}/ProdBotConfig.toml config file as needed" \
+        "And, to push the new config to the prod server, run \`${GITPOD_REPO_ROOT:-.}/scripts/deploy_gitpod.sh\`"
