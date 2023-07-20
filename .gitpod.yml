@@ -6,3 +6,19 @@ tasks:
     command: |
       poetry install
       poetry shell
+
+  - name: Setup gh auth and pull ProdBotConfig.toml
+    command: |
+      printf "\033[3J\033c\033[3J"
+
+      if token="$(printf '%s\n' "host=github.com" | gp credential-helper get | awk -F'password=' '{print $2}')"; then {
+          printf "${token}" | gh auth login --with-token
+          gh api /repos/gitpod-io/glu/actions/variables \
+              | jq -r '.variables[] | select(.name == "CONFIG_BASE64") | .value' \
+              | base64 -d > ProdBotConfig.toml
+          gp open ProdBotConfig.toml & disown
+      } fi
+
+      printf '• %s\n' \
+        "You can modify the ${GITPOD_REPO_ROOT}/ProdBotConfig.toml as needed" \
+        "And, to push the new config to the prod server, run \`./scripts/deploy_gitpod.sh\`"

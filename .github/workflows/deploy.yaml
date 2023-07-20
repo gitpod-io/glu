@@ -18,7 +18,7 @@ jobs:
 
       - name: Run deploy script
         env:
-          CONFIG_BASE64: ${{ secrets.CONFIG_BASE64 }}
+          CONFIG_BASE64: ${{ vars.CONFIG_BASE64 }}
           SSH_LOGIN: ${{ secrets.SSH_LOGIN }}
           SSH_PRIVATE_KEY_BASE64: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
         run: ./scripts/deploy.sh
