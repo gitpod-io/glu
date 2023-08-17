@@ -87,11 +87,9 @@ async def send_github_issue(
         )
 
         # Auto triage
-        if (
-            event.event == "issues"
-            or event.event == "pull_request"
-            and event.data["action"] == "opened"
-        ):
+        if (event.event == "issues" or event.event == "pull_request") and event.data[
+            "action"
+        ] == "opened":
             user_prompt = f"Title: {item_title}\n\nBody:\n{item_body}"
             ai_system_prompt = config["github"]["user_activity"]["auto_triage"][
                 "system_prompt"
@@ -107,27 +105,35 @@ async def send_github_issue(
                 n=1,
                 max_tokens=max_tokens,
             )
-            label = ai_response["choices"][0]["message"]["content"]
+            targets = ai_response["choices"][0]["message"]["content"]
 
-            if label.lower() != "false":
-                api_url = (
-                    event.data["issue"]["url"]
-                    if event.event == "issues"
-                    else event.data["pull_request"]["url"]
-                ) + "/labels"
-                # print(api_url)
-                # print(label)
+            if "false" not in targets.lower():
+                labels = []
 
-                await gh.post(api_url, data={"labels": [label]})
+                for team in config["github"]["user_activity"]["to_slack"]["teams"]:
+                    team_label = str(team["label_id_or_name"])
 
-                await slack_client.chat_postMessage(
-                    as_user=True,
-                    link_names=False,
-                    unfurl_links=False,
-                    unfurl_media=False,
-                    username=slack_client.username,
-                    icon_emoji=slack_client.icon_emoji,
-                    channel=str(main_message["channel"]),
-                    thread_ts=main_message["ts"],
-                    text=f"Triaged to {label}",
-                )
+                    # Post on slack
+                    if targets in team_label:
+                        labels.append(team_label)
+                        await slack_client.chat_postMessage(
+                            as_user=True,
+                            link_names=False,
+                            unfurl_links=False,
+                            unfurl_media=False,
+                            username=slack_client.username,
+                            icon_emoji=slack_client.icon_emoji,
+                            channel=str(main_message["channel"]),
+                            thread_ts=main_message["ts"],
+                            text=f"Triaged to {team_label}",
+                        )
+
+                if labels:
+                    # Add labels to issue
+                    api_url = (
+                        event.data["issue"]["url"]
+                        if event.event == "issues"
+                        else event.data["pull_request"]["url"]
+                    ) + "/labels"
+
+                    await gh.post(api_url, data={"labels": labels})
