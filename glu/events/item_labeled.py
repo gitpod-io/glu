@@ -7,19 +7,16 @@ from gidgethub.abc import GitHubAPI
 from glu.config_loader import config
 from glu.utils import is_self, is_bot, is_non_org_and_bot_user
 import glu.slack_client as slack
+
 router = gidgethub.routing.Router()
 
 
 @router.register("issues", action="labeled")
 @router.register("pull_request", action="labeled")
 async def item_labeled(
-    event: Event,
-    gh: GitHubAPI,
-    session: ClientSession,
-    *args, **kwargs
+    event: Event, gh: GitHubAPI, session: ClientSession, *args, **kwargs
 ) -> None:
-    """TODO
-    """
+    """TODO"""
     if not is_self(event) and is_bot(event):
         return
 
@@ -30,9 +27,4 @@ async def item_labeled(
         team_label = str(team["label_id_or_name"])
 
         if label_id == team_label or label_name == team_label:
-            await slack.send_github_issue(
-                event,
-                gh,
-                team["channel_id"],
-                "added"
-            )
+            await slack.send_github_issue(event, gh, team["channel_id"], "added")

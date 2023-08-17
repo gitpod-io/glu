@@ -1,10 +1,10 @@
 import sys
 from traceback import print_exc as traceback_print_exc
-from aiohttp import (web, ClientSession)
+from aiohttp import web, ClientSession
 from aiohttp.web_request import Request
 from cachetools import LRUCache
-from gidgethub import (aiohttp as gh_aiohttp, routing, sansio)
-from gidgethub.apps import (get_installation_access_token, get_jwt)
+from gidgethub import aiohttp as gh_aiohttp, routing, sansio
+from gidgethub.apps import get_installation_access_token, get_jwt
 import glu.events as event
 from glu.config_loader import config
 from glu.twitter_filtered import handler as twitter_filtered
@@ -22,20 +22,15 @@ async def github_payloads(request: Request):
     try:
         body = await request.read()
         webhook_secret = config["github"]["webhook_secret"]
-        event = sansio.Event.from_http(
-            request.headers,
-            body,
-            secret=webhook_secret
-        )
+        event = sansio.Event.from_http(request.headers, body, secret=webhook_secret)
 
-        print('GH delivery ID:', event.delivery_id, file=sys.stderr)
+        print("GH delivery ID:", event.delivery_id, file=sys.stderr)
 
         if event.event == "ping":
             return web.Response(status=200)
 
         async with ClientSession() as session:
-            app_id = str(request.headers.get(
-                "X-GitHub-Hook-Installation-Target-ID"))
+            app_id = str(request.headers.get("X-GitHub-Hook-Installation-Target-ID"))
             user_agent = config["github"]["user_agent"]
             gh = gh_aiohttp.GitHubAPI(session, user_agent)
             access_info = await get_installation_access_token(
@@ -45,16 +40,13 @@ async def github_payloads(request: Request):
                 private_key=config["github"]["private_key"],
             )
             gh_app = gh_aiohttp.GitHubAPI(
-                session, user_agent,
-                oauth_token=access_info["token"],
-                cache=cache
-
+                session, user_agent, oauth_token=access_info["token"], cache=cache
             )
 
             if runtime_constants.app_obj is None:
                 jwt_token = get_jwt(
-                        app_id=app_id,
-                        private_key=config["github"]["private_key"],
+                    app_id=app_id,
+                    private_key=config["github"]["private_key"],
                 )
                 resp = await gh_app.getitem("/app", jwt=jwt_token)
                 runtime_constants.app_obj = resp

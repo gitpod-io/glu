@@ -8,14 +8,16 @@ from glu.openai_client import openai
 
 
 async def is_feedback(tweet_content: str) -> bool:
-    ai_system_message = config["twitter"]["mentions"]["to_slack"]["feedback_detection"]["system_prompt"]
+    ai_system_message = config["twitter"]["mentions"]["to_slack"]["feedback_detection"][
+        "system_prompt"
+    ]
 
     ai_response = openai.ChatCompletion.create(
         # model="gpt-3.5-turbo", # This also works well
         model="gpt-4",
         messages=[
             {"role": "system", "content": ai_system_message},
-            {"role": "user", "content": tweet_content}
+            {"role": "user", "content": tweet_content},
         ],
         n=1,
         max_tokens=1,
@@ -49,13 +51,19 @@ async def handler(request: Request):
     # from re import search
     # tweet_id = search('/([0-9]+$)', tweet_url).group(1)
     tweet_id = str(json["id_str"])
-    print(f'Tweet ID: {tweet_id}', file=sys.stderr)
+    print(f"Tweet ID: {tweet_id}", file=sys.stderr)
 
     tweet = get_tweet(id=tweet_id)
-    filtered_channel = config["twitter"]["mentions"]["to_slack"]["filtered_tweets_channel"]
+    filtered_channel = config["twitter"]["mentions"]["to_slack"][
+        "filtered_tweets_channel"
+    ]
     all_channel = config["twitter"]["mentions"]["to_slack"]["all_tweets_channel"]
-    feedback_channel = config["twitter"]["mentions"]["to_slack"]["feedback_detection"]["channel"]
-    send_to_extra_feedback_channel: bool = config["twitter"]["mentions"]["to_slack"]["feedback_detection"]["send_to_extra_channel"]
+    feedback_channel = config["twitter"]["mentions"]["to_slack"]["feedback_detection"][
+        "channel"
+    ]
+    send_to_extra_feedback_channel: bool = config["twitter"]["mentions"]["to_slack"][
+        "feedback_detection"
+    ]["send_to_extra_channel"]
 
     # # ignore own tweets
     # sender_username: str = json["user"]["screen_name"]
@@ -72,7 +80,7 @@ async def handler(request: Request):
 
     try:
         if await is_feedback(tweet_content):
-            message = f'*[Potential feedback]*: {tweet_url}'
+            message = f"*[Potential feedback]*: {tweet_url}"
             feedback_detected = True
     except:
         pass
@@ -86,8 +94,7 @@ async def handler(request: Request):
             # return pd.flow.exit("Gitpod not mentioned in main tweet")
             return web.Response(status=200)
     else:
-        main_tweet_content = get_tweet(
-            id=tweet.inReplyToTweetId).rawContent.lower()
+        main_tweet_content = get_tweet(id=tweet.inReplyToTweetId).rawContent.lower()
         # if main_tweet_replies == 1:
         count = 0
         # for word in tweet.content.lower().split():

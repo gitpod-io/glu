@@ -16,7 +16,9 @@ class CustomAsyncWebClient(AsyncWebClient):
 slack_client = CustomAsyncWebClient(token=config["slack"]["api_token"])
 
 
-async def send_github_issue(event: Event, gh: GitHubAPI, channel: str, what: str) -> None:
+async def send_github_issue(
+    event: Event, gh: GitHubAPI, channel: str, what: str
+) -> None:
     sender = event.data["sender"]["login"]
     item_url: str | None = None
     if event.event == "issues":
@@ -26,28 +28,30 @@ async def send_github_issue(event: Event, gh: GitHubAPI, channel: str, what: str
     elif event.event == "issue_comment":
         item_url = event.data["comment"]["html_url"]
 
-    item_title = html_unescape((
-        event.data["issue"]["title"]
-        if event.event == "issues" or event.event == "issue_comment"
-        else event.data["pull_request"]["title"]
-    ))
-    text = f'<https://github.com/{sender}|{sender}> {what} <{item_url}|{item_title}>'  # noqa: E501
+    item_title = html_unescape(
+        (
+            event.data["issue"]["title"]
+            if event.event == "issues" or event.event == "issue_comment"
+            else event.data["pull_request"]["title"]
+        )
+    )
+    text = f"<https://github.com/{sender}|{sender}> {what} <{item_url}|{item_title}>"  # noqa: E501
 
     # Main message
     main_message = await slack_client.chat_postMessage(
         username=slack_client.username,
         icon_emoji=slack_client.icon_emoji,
         channel=channel,
-        text=f'{sender} {what}: {item_title}',
+        text=f"{sender} {what}: {item_title}",
         blocks=[
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
                     "text": text,
-                }
+                },
             }
-        ]
+        ],
     )
     # Also send item body inside thread
     item_body: str | None = None
@@ -59,7 +63,7 @@ async def send_github_issue(event: Event, gh: GitHubAPI, channel: str, what: str
         item_body = event.data["comment"]["body"]
 
     if item_body is not None:
-        text = f'{item_body}\n\n_View it on <{item_url}|GitHub>_'
+        text = f"{item_body}\n\n_View it on <{item_url}|GitHub>_"
         # text = f'_View it on <{item_url}|GitHub>_'
         await slack_client.chat_postMessage(
             as_user=True,
@@ -77,15 +81,21 @@ async def send_github_issue(event: Event, gh: GitHubAPI, channel: str, what: str
                     "text": {
                         "type": "mrkdwn",
                         "text": text,
-                    }
+                    },
                 }
-            ]
+            ],
         )
 
         # Auto triage
-        if event.event == "issues" or event.event == "pull_request" and event.data["action"] == "opened":
-            user_prompt = f'Title: {item_title}\n\nBody:\n{item_body}'
-            ai_system_prompt = config["github"]["user_activity"]["auto_triage"]["system_prompt"]
+        if (
+            event.event == "issues"
+            or event.event == "pull_request"
+            and event.data["action"] == "opened"
+        ):
+            user_prompt = f"Title: {item_title}\n\nBody:\n{item_body}"
+            ai_system_prompt = config["github"]["user_activity"]["auto_triage"][
+                "system_prompt"
+            ]
             max_tokens = config["github"]["user_activity"]["auto_triage"]["max_tokens"]
 
             ai_response = openai.ChatCompletion.create(

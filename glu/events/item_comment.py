@@ -8,18 +8,15 @@ from glu.config_loader import config
 from glu.utils import is_non_org_and_bot_user
 import glu.slack_client as slack
 from html import unescape as html_unescape
+
 router = gidgethub.routing.Router()
 
 
 @router.register("issue_comment", action="created")
 async def item_labeled(
-    event: Event,
-    gh: GitHubAPI,
-    session: ClientSession,
-    *args, **kwargs
+    event: Event, gh: GitHubAPI, session: ClientSession, *args, **kwargs
 ) -> None:
-    """TODO
-    """
+    """TODO"""
     if not await is_non_org_and_bot_user(event, gh):
         return
 
@@ -28,7 +25,7 @@ async def item_labeled(
         event,
         gh,
         config["github"]["user_activity"]["to_slack"]["all_channel_id"],
-        "commented on"
+        "commented on",
     )
 
     # Then applicable teams
@@ -43,8 +40,5 @@ async def item_labeled(
 
             if label_id == team_label or label_name == team_label:
                 await slack.send_github_issue(
-                    event,
-                    gh,
-                    team["channel_id"],
-                    "commented on"
+                    event, gh, team["channel_id"], "commented on"
                 )

@@ -4,16 +4,19 @@ from tomllib import load as toml_load
 from pathlib import Path
 from gidgethub.sansio import Event
 from gidgethub.abc import GitHubAPI
+
 # from typing import Tuple
 
 # Some bots use a normal personal GitHub account to operate
-bot_users = frozenset({
-    "roboquat",
-    "incident-io[bot]",
-    "werft-gitpod-dev-com[bot]",
-    "autofix-bot",
-    "dependabot[bot]",
-})
+bot_users = frozenset(
+    {
+        "roboquat",
+        "incident-io[bot]",
+        "werft-gitpod-dev-com[bot]",
+        "autofix-bot",
+        "dependabot[bot]",
+    }
+)
 
 
 def load_config(path: Path) -> dict[str, Any]:
@@ -25,6 +28,7 @@ def load_config(path: Path) -> dict[str, Any]:
 
 def is_self(event: Event) -> bool:
     from glu import runtime_constants
+
     sender = str(event.data["sender"]["login"])
     sender_type = str(event.data["sender"]["type"]).lower()
 
@@ -52,9 +56,7 @@ def is_bot(event: Event) -> bool:
         return False
 
 
-async def is_non_org_and_bot_user(
-    event: Event, gh: GitHubAPI
-) -> bool:
+async def is_non_org_and_bot_user(event: Event, gh: GitHubAPI) -> bool:
     # ) -> Tuple[bool, str | None]:
 
     # Only respond to real Users
@@ -63,7 +65,7 @@ async def is_non_org_and_bot_user(
 
     # Get org members
     organization = event.data["organization"]["login"]
-    endpoint = f'/orgs/{organization}/members?per_page=100'
+    endpoint = f"/orgs/{organization}/members?per_page=100"
     members = []
     async for member in gh.getiter(endpoint):
         members.append(member["login"])
