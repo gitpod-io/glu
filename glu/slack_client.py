@@ -114,7 +114,7 @@ async def send_github_issue(
                     team_label = str(team["label_id_or_name"])
 
                     # Post on slack
-                    if targets in team_label:
+                    if team_label in targets:
                         labels.append(team_label)
                         await slack_client.chat_postMessage(
                             as_user=True,
