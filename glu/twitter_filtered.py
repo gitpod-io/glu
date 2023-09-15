@@ -116,3 +116,75 @@ async def handler(request: Request):
 
     await send_msg(message, filtered_channel)
     return web.Response(status=200)
+
+
+# zapier below
+# import re
+#
+# def check_gitpod_mention(tweet):
+#     # Check if the tweet starts with 'RT @username:'
+#     if re.match(r'^RT @[A-Za-z0-9_]+:', tweet, re.IGNORECASE):
+#         return 'false'
+#
+#     # Extract leading mentions to simulate Twitter reply behavior
+#     leading_mentions = re.findall(r'@([A-Za-z0-9_]+)\s', tweet, re.IGNORECASE)
+#
+#     # Count occurrences of '@gitpod' in leading mentions, case-insensitively
+#     gitpod_count = sum(1 for mention in leading_mentions if mention.lower() == 'gitpod')
+#
+#     # Remove leading mentions from the tweet
+#     tweet = re.sub(r'^(@[A-Za-z0-9_]+ )+', '', tweet)
+#
+#     # Check for explicit mention of 'gitpod' or '@gitpod' in the rest of the tweet
+#     if re.search(r'\b(?:@?gitpod)\b', tweet, re.IGNORECASE):
+#         return 'true'
+#
+#     # Return true only if '@gitpod' appears exactly twice in leading mentions
+#     if gitpod_count == 2:
+#         return 'true'
+#
+#     return 'false'
+#
+#
+# tweet_text = input_data['tweet_text']
+# filtered = False
+# is_competitor = False
+# is_retweet = False
+# gitpod_mentions_channel = False
+#
+#
+# # Avoid RTs
+# if re.match(r'^RT @[A-Za-z0-9_]+:', tweet_text):
+#     is_retweet = True
+# else:
+#     is_quote = True if input_data['quote_status'].lower() == 'true' and 'quote_tweet_text' in input_data else False
+#
+#     # Adjust tweet_text if a quoted tweet
+#     if is_quote:
+#         tweet_text = input_data['quote_tweet_text']
+#
+#     if 'gitpod' in tweet_text.lower():
+#         gitpod_mentions_channel = True
+#
+#         # If a reply
+#         if 'in_reply_to' in input_data:
+#             filtered = check_gitpod_mention(tweet_text)
+#         else:
+#             filtered = True
+#
+#     # If a competitor tweet
+#     elif int(input_data['follower_count']) > 1500:
+#         is_competitor = True
+#
+#
+# output = [{
+#     'filtered': filtered,
+#     'competitor': is_competitor,
+#     'retweet': is_retweet,
+#     'gitpod_mentions_channel': gitpod_mentions_channel,
+#     'tweet_url': input_data['tweet_url'],
+#     'slack_bot_name': 'Twitter',
+#     'slack_bot_avatar_emoji': ':twitter:',
+# }]
+#
+#
