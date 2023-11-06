@@ -1,3 +1,4 @@
+import asyncio
 import sys
 from traceback import print_exc as traceback_print_exc
 from aiohttp import web, ClientSession
@@ -7,8 +8,8 @@ from gidgethub import aiohttp as gh_aiohttp, routing, sansio
 from gidgethub.apps import get_installation_access_token, get_jwt
 import glu.events as event
 from glu.config_loader import config
-from glu.twitter_filtered import handler as twitter_filtered
 from glu import runtime_constants
+from glu.twitter_monitor import run as twitter_run
 
 router = routing.Router(
     event.item_opened,
@@ -59,10 +60,21 @@ async def github_payloads(request: Request):
         return web.Response(status=500)
 
 
-if __name__ == "__main__":
+async def main():
     app = web.Application()
     app.router.add_post("/", github_payloads)
-    app.router.add_post("/twitter_filtered", twitter_filtered)
     port = int(config["server"].get("port", 8000))
     host = str(config["server"].get("host", "127.0.0.1"))
-    web.run_app(app, host=host, port=port)
+
+    runner = web.AppRunner(app)  # Instantiate AppRunner
+    await runner.setup()
+    site = web.TCPSite(runner, host, port)
+
+    await asyncio.gather(
+        twitter_run(),
+        site.start(),
+    )
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
