@@ -69,7 +69,7 @@ async def post_on_slack(new_tweets):
         mentions_gitpod = "gitpod" in tweet_text
 
         tweet_type = "post"
-        if "ref_tweets_data" in tweet:
+        if "referenced_tweets" in tweet:
             # _, ref_tweet_id, _, tweet_type = map(
             #     str.strip, tweet["ref_tweets_data"].split()
             # )
