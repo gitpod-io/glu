@@ -19,6 +19,7 @@ slack_client = CustomAsyncWebClient(token=config["slack"]["api_token"])
 async def send_github_issue(
     event: Event, gh: GitHubAPI, channel: str, what: str
 ) -> None:
+    organization = event.data["organization"]["login"]
     sender = event.data["sender"]["login"]
     item_url: str | None = None
     if event.event == "issues":
@@ -87,9 +88,12 @@ async def send_github_issue(
         )
 
         # Auto triage
-        if (event.event == "issues" or event.event == "pull_request") and event.data[
-            "action"
-        ] == "opened":
+        ignored_orgs = config["github"]["user_activity"]["auto_triage"]["ignored_orgs"]
+        if (
+            organization not in ignored_orgs
+            and (event.event == "issues" or event.event == "pull_request")
+            and event.data["action"] == "opened"
+        ):
             user_prompt = f"Title: {item_title}\n\nBody:\n{item_body}"
             ai_system_prompt = config["github"]["user_activity"]["auto_triage"][
                 "system_prompt"
