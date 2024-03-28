@@ -138,7 +138,7 @@ async def job(db: aiosqlite.Connection, cur: aiosqlite.Cursor):
             print("No new tweets.")
 
     else:
-        print(f"Request failed with status code {response.status_code}")
+        print(f"Request failed: {response.text}")
 
 
 async def run():
@@ -156,7 +156,8 @@ async def run():
     while True:
         try:
             await job(db, cur)
-            await asyncio.sleep(3600)
+            # Every 1.5 hours
+            await asyncio.sleep(5400)
             # Delete tweets older than 7 days
             await cur.execute(
                 "DELETE FROM tweets WHERE timestamp <= datetime('now','-7 day')"
