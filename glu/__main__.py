@@ -6,6 +6,7 @@ from aiohttp.web_request import Request
 from cachetools import LRUCache
 from gidgethub import aiohttp as gh_aiohttp, routing, sansio
 from gidgethub.apps import get_installation_access_token, get_jwt
+from glu import zendesk
 import glu.events as event
 from glu.config_loader import config
 from glu import runtime_constants
@@ -60,9 +61,21 @@ async def github_payloads(request: Request):
         return web.Response(status=500)
 
 
+async def zendesk_payloads(request: Request):
+    try:
+        body = await request.read()
+        await zendesk.run(body)
+        return web.Response(status=200)
+
+    except Exception:
+        traceback_print_exc(file=sys.stderr)
+        return web.Response(status=500)
+
+
 async def main():
     app = web.Application()
     app.router.add_post("/", github_payloads)
+    app.router.add_post("/zendesk", zendesk_payloads)
     port = int(config["server"].get("port", 8000))
     host = str(config["server"].get("host", "127.0.0.1"))
 
@@ -72,6 +85,7 @@ async def main():
 
     await asyncio.gather(
         twitter_run(),
+        zendesk_run(),
         site.start(),
     )
 
