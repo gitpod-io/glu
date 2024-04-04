@@ -61,21 +61,11 @@ async def github_payloads(request: Request):
         return web.Response(status=500)
 
 
-async def zendesk_payloads(request: Request):
-    try:
-        body = await request.read()
-        await zendesk.run(body)
-        return web.Response(status=200)
-
-    except Exception:
-        traceback_print_exc(file=sys.stderr)
-        return web.Response(status=500)
-
-
 async def main():
+    # await zendesk.init()
     app = web.Application()
     app.router.add_post("/", github_payloads)
-    app.router.add_post("/zendesk", zendesk_payloads)
+    app.router.add_post("/zendesk", zendesk.webhook_handler)
     port = int(config["server"].get("port", 8000))
     host = str(config["server"].get("host", "127.0.0.1"))
 
@@ -85,7 +75,6 @@ async def main():
 
     await asyncio.gather(
         twitter_run(),
-        zendesk_run(),
         site.start(),
     )
 

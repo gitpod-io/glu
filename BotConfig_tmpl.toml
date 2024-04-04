@@ -46,4 +46,13 @@ system_prompt = """
 
 [zendesk]
 api_key = "{{.ZENDESK_API_KEY}}"
-instance_name = "{{.ZENDESK_INSTANCE}}"
+api_agent_email = "{{.ZENDESK_API_AGENT_EMAIL}}"
+subdomain = "{{.ZENDESK_SUBDOMAIN}}"
+trigger_group_ids = {{.ZENDESK_TRIGGER_GROUP_IDS}}
+
+[bigquery]
+adc = """
+{{.BIGQUERY_ADC}}"""
+db_address = "{{.BIGQUERY_DB_ADDRESS}}"
+user_info_sql = """
+{{.BIGQUERY_USER_INFO_SQL}}"""
