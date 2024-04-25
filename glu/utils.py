@@ -1,4 +1,5 @@
 from os import environ
+import requests
 from typing import Any
 from tomllib import load as toml_load
 from pathlib import Path
@@ -81,3 +82,13 @@ async def is_non_org_and_bot_user(event: Event, gh: GitHubAPI) -> bool:
     else:
         # return (False, None)
         return False
+
+
+def download_file(url, local_filename):
+    # Send a GET request to the URL
+    r = requests.get(url, allow_redirects=True, stream=True)
+    # Open a local file with write-binary mode
+    with open(local_filename, "wb") as f:
+        # Write the content to the local file
+        for chunk in r.iter_content(chunk_size=8192):
+            f.write(chunk)

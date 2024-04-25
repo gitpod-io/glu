@@ -1,0 +1,73 @@
+[server]
+port = {{.SERVER_PORT}}
+host = "{{.SERVER_HOST}}"
+
+[github]
+user_agent = "{{.GITHUB_USER_AGENT}}"
+webhook_secret = "{{.GITHUB_WEBHOOK_SECRET}}"
+private_key = """
+{{.GITHUB_PRIVATE_KEY}}"""
+
+[github.user_activity.to_slack]
+all_channel_id = "{{.GITHUB_USER_ACTIVITY_TO_SLACK_ALL_CHANNEL_ID}}"
+
+[github.user_activity.auto_triage]
+ignored_orgs = {{.GITHUB_USER_ACTIVITY_AUTO_TRIAGE_IGNORED_ORGS}}
+system_prompt = """
+{{.GITHUB_USER_ACTIVITY_AUTO_TRIAGE_SYSTEM_PROMPT}}"""
+
+max_tokens = {{.GITHUB_USER_ACTIVITY_AUTO_TRIAGE_MAX_TOKENS}}
+
+{{.GITHUB_USER_ACTIVITY_TO_SLACK_TEAMS_TOML}}
+
+[openai]
+api_key = "{{.OPENAI_API_KEY}}"
+
+[slack]
+api_token = "{{.SLACK_API_TOKEN}}"
+username = "{{.SLACK_USERNAME}}"
+icon_emoji = "{{.SLACK_ICON_EMOJI}}"
+
+[twitter]
+bearer_token = "{{.TWITTER_BEARER_TOKEN}}"
+
+[twitter.mentions.to_slack]
+own_username = "{{.TWITTER_MENTIONS_TO_SLACK_OWN_USERNAME}}"
+all_tweets_channel = "{{.TWITTER_MENTIONS_TO_SLACK_ALL_TWEETS_CHANNEL}}"
+filtered_tweets_channel = "{{.TWITTER_MENTIONS_TO_SLACK_FILTERED_TWEETS_CHANNEL}}"
+competitor_tweets_channel = "{{.TWITTER_MENTIONS_TO_SLACK_COMPETITOR_TWEETS_CHANNEL}}"
+search_query = '{{.TWITTER_MENTIONS_TO_SLACK_SEARCH_QUERY}}'
+
+[twitter.mentions.to_slack.feedback_detection]
+send_to_extra_channel = {{.TWITTER_MENTIONS_TO_SLACK_FEEDBACK_DETECTION_SEND_TO_EXTRA_CHANNEL}}
+channel = "{{.TWITTER_MENTIONS_TO_SLACK_FEEDBACK_DETECTION_CHANNEL}}"
+system_prompt = """
+{{.TWITTER_MENTIONS_TO_SLACK_FEEDBACK_DETECTION_SYSTEM_PROMPT}}"""
+
+[zendesk]
+api_key = "{{.ZENDESK_API_KEY}}"
+api_agent_email = "{{.ZENDESK_API_AGENT_EMAIL}}"
+subdomain = "{{.ZENDESK_SUBDOMAIN}}"
+trigger_group_ids = {{.ZENDESK_TRIGGER_GROUP_IDS}}
+ticket_type_custom_id = {{.ZENDESK_TICKET_TYPE_CUSTOM_ID}}
+community_author_id = {{.ZENDESK_COMMUNITY_AUTHOR_ID}}
+
+[zendesk.templates]
+blocked = """
+{{.ZENDESK_TEMPLATES_BLOCKED}}"""
+
+ask_pnumber = """
+{{.ZENDESK_TEMPLATES_ASK_PNUMBER}}"""
+
+manual_verify = """
+{{.ZENDESK_TEMPLATES_MANUAL_VERIFY}}"""
+
+[bigquery]
+adc = """
+{{.BIGQUERY_ADC}}"""
+db_address = "{{.BIGQUERY_DB_ADDRESS}}"
+user_info_sql = """
+{{.BIGQUERY_USER_INFO_SQL}}"""
+
+[gitpod]
+gpctl_url = "{{.GITPOD_GPCTL_URL}}"

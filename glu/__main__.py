@@ -6,6 +6,7 @@ from aiohttp.web_request import Request
 from cachetools import LRUCache
 from gidgethub import aiohttp as gh_aiohttp, routing, sansio
 from gidgethub.apps import get_installation_access_token, get_jwt
+from glu import zendesk
 import glu.events as event
 from glu.config_loader import config
 from glu import runtime_constants
@@ -61,8 +62,10 @@ async def github_payloads(request: Request):
 
 
 async def main():
+    # await zendesk.init()
     app = web.Application()
     app.router.add_post("/", github_payloads)
+    app.router.add_post("/zendesk", zendesk.webhook_handler)
     port = int(config["server"].get("port", 8000))
     host = str(config["server"].get("host", "127.0.0.1"))
 
