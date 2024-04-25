@@ -133,7 +133,7 @@ async def job(db: aiosqlite.Connection, cur: aiosqlite.Cursor):
         # If there are any new tweets
         if new_tweets:
             # print(new_tweets)
-            # await post_on_slack(new_tweets)
+            await post_on_slack(new_tweets)
             pass
         else:
             print("No new tweets.")
@@ -163,7 +163,7 @@ async def run():
                 "DELETE FROM tweets WHERE timestamp <= datetime('now','-7 day')"
             )
             await db.commit()
-            
+
             # Delay next run for 1.5 hours
             await asyncio.sleep(5400)
         except Exception as e:
