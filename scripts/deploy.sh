@@ -27,8 +27,9 @@ Description=Glu Bot
 After=network.target
 
 [Service]
+Environment=HOME='/root'
 ExecStartPre=sh -c 'git reset --hard && git pull --ff && poetry install'
-ExecStart=doppler --config-dir /root/.doppler run --mount BotConfig.toml --mount-template BotConfig_tmpl.toml --mount-max-reads 1 -- poetry run python3 -m glu
+ExecStart=doppler run --mount BotConfig.toml --mount-template BotConfig_tmpl.toml --mount-max-reads 1 -- poetry run python3 -m glu
 Restart=always
 WorkingDirectory=${app_dir}
 
