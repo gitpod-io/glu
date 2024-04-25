@@ -60,6 +60,7 @@ async def post_zendesk_comment(
 ) -> None:
     ticket = zenpy_client.tickets(id=ticket_id)
     ticket.status = ustatus
+    ticket.assignee_id = author_id
     ticket.tags.extend(["bot_processed"] + atags)
     ticket.custom_fields.append(
         CustomField(id=config["zendesk"]["ticket_type_custom_id"], value=utype)
@@ -219,7 +220,7 @@ ORDER BY
                             )
                             os.chmod(gpctl_path, 0o755)
 
-                        # await asyncio.sleep(180)
+                        await asyncio.sleep(300)
                         subprocess.run(
                             [
                                 gpctl_path,
