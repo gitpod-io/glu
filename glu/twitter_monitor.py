@@ -157,11 +157,13 @@ async def run():
     while True:
         try:
             await job(db, cur)
+
             # Delete tweets older than 7 days
             await cur.execute(
                 "DELETE FROM tweets WHERE timestamp <= datetime('now','-7 day')"
             )
             await db.commit()
+            
             # Delay next run for 1.5 hours
             await asyncio.sleep(5400)
         except Exception as e:
