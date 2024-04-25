@@ -220,7 +220,7 @@ ORDER BY
                             )
                             os.chmod(gpctl_path, 0o755)
 
-                        await asyncio.sleep(300)
+                        # await asyncio.sleep(300)
                         subprocess.run(
                             [
                                 gpctl_path,
