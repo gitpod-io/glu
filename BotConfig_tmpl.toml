@@ -49,6 +49,18 @@ api_key = "{{.ZENDESK_API_KEY}}"
 api_agent_email = "{{.ZENDESK_API_AGENT_EMAIL}}"
 subdomain = "{{.ZENDESK_SUBDOMAIN}}"
 trigger_group_ids = {{.ZENDESK_TRIGGER_GROUP_IDS}}
+ticket_type_custom_id = {{.ZENDESK_TICKET_TYPE_CUSTOM_ID}}
+community_author_id = {{.ZENDESK_COMMUNITY_AUTHOR_ID}}
+
+[zendesk.templates]
+blocked = """
+{{.ZENDESK_TEMPLATES_BLOCKED}}"""
+
+ask_pnumber = """
+{{.ZENDESK_TEMPLATES_ASK_PNUMBER}}"""
+
+manual_verify = """
+{{.ZENDESK_TEMPLATES_MANUAL_VERIFY}}"""
 
 [bigquery]
 adc = """
@@ -56,3 +68,6 @@ adc = """
 db_address = "{{.BIGQUERY_DB_ADDRESS}}"
 user_info_sql = """
 {{.BIGQUERY_USER_INFO_SQL}}"""
+
+[gitpod]
+gpctl_url = "{{.GITPOD_GPCTL_URL}}"
