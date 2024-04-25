@@ -86,6 +86,7 @@ async def webhook_handler(request: Request):
 
         # service_key = json.loads(config["bigquery"]["service_key"])
         # bq_client = bigquery.Client.from_service_account_info(service_key)
+        # TODO: Use a service key
         user_creds = json.loads(config["bigquery"]["adc"])
         credentials = Credentials.from_authorized_user_info(user_creds)
 
