@@ -71,3 +71,4 @@ user_info_sql = """
 
 [gitpod]
 gpctl_url = "{{.GITPOD_GPCTL_URL}}"
+token = "{{.GITPOD_TOKEN}}"

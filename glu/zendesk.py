@@ -220,7 +220,16 @@ ORDER BY
                             os.chmod(gpctl_path, 0o755)
 
                         # await asyncio.sleep(180)
-                        subprocess.run([gpctl_path, "users", "verify", user.userId])
+                        subprocess.run(
+                            [
+                                gpctl_path,
+                                "users",
+                                "verify",
+                                user.userId,
+                                "--token",
+                                config["gitpod"]["token"],
+                            ]
+                        )
 
                         await post_zendesk_comment(
                             body=config["zendesk"]["templates"]["manual_verify"],
