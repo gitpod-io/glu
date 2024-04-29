@@ -50,6 +50,7 @@ EOF
 	systemctl enable "${systemd_service_name}"
 
 	systemctl stop "${systemd_service_name}"
+	pkill -9 doppler || true
 	systemctl start "${systemd_service_name}"
 }
 
