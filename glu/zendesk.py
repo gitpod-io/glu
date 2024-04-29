@@ -227,11 +227,15 @@ ORDER BY
             elif not user_obj.lastVerificationTime:
                 comments = zenpy_client.tickets.comments(ticket=ticket_id)
                 comments_str = ""
+                last_comment_author_id = None
+
                 for comment in comments:
+                    last_comment_author_id = comment.author_id
+
                     if comment.author_id == requester_id:
                         comments_str += comment.body + "\n"
 
-                if comments_str:
+                if last_comment_author_id == requester_id and comments_str:
                     ai_response = openai.ChatCompletion.create(
                         model="gpt-3.5-turbo",
                         messages=[
