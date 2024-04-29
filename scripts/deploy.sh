@@ -44,12 +44,13 @@ EOF
 
 	}; fi
 
-	base64 -d <<<"${CONFIG_BASE64}" >"${app_dir}/BotConfig.toml"
+	#base64 -d <<<"${CONFIG_BASE64}" >"${app_dir}/BotConfig.toml"
 
 	systemctl daemon-reload
 	systemctl enable "${systemd_service_name}"
 
 	systemctl stop "${systemd_service_name}"
+ 	rm -f "${app_dir}/BotConfig.toml"
 	pkill -9 doppler || true
 	systemctl start "${systemd_service_name}"
 }
@@ -70,6 +71,5 @@ ssh_cmd=(
 )
 
 printf '%s\n' \
-	CONFIG_BASE64"=${CONFIG_BASE64}" \
 	"$(declare -f deploy)" \
 	"deploy" | "${ssh_cmd[@]}" -- bash
