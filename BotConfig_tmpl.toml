@@ -48,7 +48,7 @@ system_prompt = """
 api_key = "{{.ZENDESK_API_KEY}}"
 api_agent_email = "{{.ZENDESK_API_AGENT_EMAIL}}"
 subdomain = "{{.ZENDESK_SUBDOMAIN}}"
-trigger_group_ids = {{.ZENDESK_TRIGGER_GROUP_IDS}}
+# trigger_group_ids = {{.ZENDESK_TRIGGER_GROUP_IDS}}
 ticket_type_custom_id = {{.ZENDESK_TICKET_TYPE_CUSTOM_ID}}
 community_author_id = {{.ZENDESK_COMMUNITY_AUTHOR_ID}}
 
@@ -61,6 +61,9 @@ ask_pnumber = """
 
 manual_verify = """
 {{.ZENDESK_TEMPLATES_MANUAL_VERIFY}}"""
+
+user_not_found = """
+{{.ZENDESK_TEMPLATES_USER_NOT_FOUND}}"""
 
 [bigquery]
 adc = """

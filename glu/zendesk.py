@@ -50,8 +50,9 @@ async def init() -> None:
 
 
 async def post_zendesk_comment(
-    body: str,
     ticket_id: str,
+    body: str = "",
+    html_body: str = "",
     public: bool = True,
     ustatus: str = "open",
     atags: List[str] = [],
@@ -65,11 +66,19 @@ async def post_zendesk_comment(
     ticket.custom_fields.append(
         CustomField(id=config["zendesk"]["ticket_type_custom_id"], value=utype)
     )
-    ticket.comment = Comment(
-        body=body,
-        public=public,
-        author_id=author_id,
-    )
+
+    if body or html_body:
+        comment_args = {
+            "public": public,
+            "author_id": author_id,
+        }
+        if body:
+            comment_args["body"] = body
+        if html_body:
+            comment_args["html_body"] = html_body
+
+        ticket.comment = Comment(**comment_args)
+
     zenpy_client.tickets.update(ticket)
 
 
@@ -78,16 +87,30 @@ async def webhook_handler(request: Request):
         body_bytes = await request.read()
         body_str = body_bytes.decode("utf-8")
         webhook_data = ast.literal_eval(body_str)
-        requester_email = webhook_data["requester"]["email"]
+
         ticket_id = webhook_data["id"]
+        ticket_obj = zenpy_client.tickets(id=ticket_id)
+        requester_id = ticket_obj.requester_id or ticket_obj.requester.id
+        requester_email = (
+            ticket_obj.requester.email or ticket_obj.via.source.from_["address"]
+        )
+        ticket_tags = list(ticket_obj.tags)
+        # requester_email = webhook_data.get("requester", {}).get(
+        #     "email"
+        # ) or webhook_data.get("via", {}).get("source", {}).get("from", {}).get(
+        #     "address"
+        # )
+        # requester_id = webhook_data.get("requester", {}).get(
+        #     "email"
+        # ) or webhook_data.get("requester_id")
 
-        # Only work for specified group ids
-        if webhook_data["group_id"] not in config["zendesk"]["trigger_group_ids"]:
-            return web.Response(status=204)
+        # # Only work for specified group ids
+        # if webhook_data["group_id"] not in config["zendesk"]["trigger_group_ids"]:
+        #     return web.Response(status=204)
 
+        # TODO: Use a service key
         # service_key = json.loads(config["bigquery"]["service_key"])
         # bq_client = bigquery.Client.from_service_account_info(service_key)
-        # TODO: Use a service key
         user_creds = json.loads(config["bigquery"]["adc"])
         credentials = Credentials.from_authorized_user_info(user_creds)
 
@@ -169,32 +192,44 @@ ORDER BY
             f""" SELECT * FROM EXTERNAL_QUERY("{db_address}", "{nn_inner_query}"); """
         )
 
-        rows = bq_client.query_and_wait(query)  # Make an API request.
+        rows = list(bq_client.query_and_wait(query))  # Make an API request.
+        not_found_tag = "user_not_found"
 
-        rows = list(rows)
-        user = rows[0]
+        # If no userdata found
+        if not rows:
+            if not_found_tag not in ticket_tags:
+                ticket_obj = zenpy_client.tickets(id=ticket_id)
+                await post_zendesk_comment(
+                    html_body=config["zendesk"]["templates"][not_found_tag],
+                    ticket_id=ticket_id,
+                    atags=[not_found_tag],
+                    ustatus="solved",
+                )
+            return web.Response(status=204)
+
+        user_obj = rows[0]
         stripe_billing_strategy_exists = any(
             row["billingStrategy"] == "stripe" for row in rows
         )
-        print(user)
 
         if not stripe_billing_strategy_exists:
             # User is blocked
-            if user.blocked == 1:
+            blocked_tag = "blocked"
+            if user_obj.blocked == 1 and blocked_tag not in ticket_tags:
                 await post_zendesk_comment(
-                    body=config["zendesk"]["templates"]["blocked"],
+                    body=config["zendesk"]["templates"][blocked_tag],
                     ticket_id=ticket_id,
-                    atags=["blocked"],
+                    atags=[blocked_tag],
                     ustatus="pending",
                 )
 
             # User has not verified yet
-            elif not user.lastVerificationTime:
-                tickets = zenpy_client.tickets.comments(ticket=ticket_id)
+            elif not user_obj.lastVerificationTime:
+                comments = zenpy_client.tickets.comments(ticket=ticket_id)
                 comments_str = ""
-                for ticket in tickets:
-                    if ticket.author_id == webhook_data["requester"]["id"]:
-                        comments_str += ticket.body + "\n"
+                for comment in comments:
+                    if comment.author_id == requester_id:
+                        comments_str += comment.body + "\n"
 
                 if comments_str:
                     ai_response = openai.ChatCompletion.create(
@@ -226,7 +261,7 @@ ORDER BY
                                 gpctl_path,
                                 "users",
                                 "verify",
-                                user.userId,
+                                user_obj.userId,
                                 "--token",
                                 config["gitpod"]["token"],
                             ]
