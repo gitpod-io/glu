@@ -249,6 +249,7 @@ ORDER BY
                         max_tokens=1,
                     )
                     targets = ai_response["choices"][0]["message"]["content"]
+                    pv_tag = "phone_verification"
 
                     if "true" in targets:
                         # TODO: This needs improvements
@@ -275,15 +276,16 @@ ORDER BY
                             body=config["zendesk"]["templates"]["manual_verify"],
                             ticket_id=ticket_id,
                             ustatus="solved",
-                            atags=["phone_verification"],
+                            atags=[pv_tag],
                         )
                     else:
-                        await post_zendesk_comment(
-                            body=config["zendesk"]["templates"]["ask_pnumber"],
-                            ticket_id=ticket_id,
-                            ustatus="pending",
-                            atags=["phone_verification"],
-                        )
+                        if pv_tag not in ticket_tags:
+                            await post_zendesk_comment(
+                                body=config["zendesk"]["templates"]["ask_pnumber"],
+                                ticket_id=ticket_id,
+                                ustatus="pending",
+                                atags=[pv_tag],
+                            )
 
         # TODO: Ask to create a stripe read only api key
 
