@@ -199,6 +199,7 @@ ORDER BY
         if not rows:
             if not_found_tag not in ticket_tags:
                 ticket_obj = zenpy_client.tickets(id=ticket_id)
+                await asyncio.sleep(300)
                 await post_zendesk_comment(
                     html_body=config["zendesk"]["templates"][not_found_tag],
                     ticket_id=ticket_id,
@@ -216,6 +217,7 @@ ORDER BY
             # User is blocked
             blocked_tag = "blocked"
             if user_obj.blocked == 1 and blocked_tag not in ticket_tags:
+                await asyncio.sleep(300)
                 await post_zendesk_comment(
                     body=config["zendesk"]["templates"][blocked_tag],
                     ticket_id=ticket_id,
@@ -260,7 +262,6 @@ ORDER BY
                             )
                             os.chmod(gpctl_path, 0o755)
 
-                        # await asyncio.sleep(300)
                         subprocess.run(
                             [
                                 gpctl_path,
@@ -272,6 +273,7 @@ ORDER BY
                             ]
                         )
 
+                        await asyncio.sleep(300)
                         await post_zendesk_comment(
                             body=config["zendesk"]["templates"]["manual_verify"],
                             ticket_id=ticket_id,
@@ -280,6 +282,7 @@ ORDER BY
                         )
                     else:
                         if pv_tag not in ticket_tags:
+                            await asyncio.sleep(300)
                             await post_zendesk_comment(
                                 body=config["zendesk"]["templates"]["ask_pnumber"],
                                 ticket_id=ticket_id,
