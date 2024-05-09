@@ -9,6 +9,7 @@ from traceback import print_exc as traceback_print_exc
 from aiohttp.web_request import Request
 from aiohttp import web
 from zenpy import Zenpy
+from stripe import CustomerService, StripeClient
 
 from glu import utils
 from glu.config_loader import config
@@ -24,9 +25,34 @@ creds = {
     "token": config["zendesk"]["api_key"],
     "subdomain": config["zendesk"]["subdomain"],
 }
+
 zenpy_client = Zenpy(
     **creds,
 )
+
+stripe_client = StripeClient(config["stripe"]["api_key"])
+
+# TODO: Use a service key
+# service_key = json.loads(config["bigquery"]["service_key"])
+# bq_client = bigquery.Client.from_service_account_info(service_key)
+user_creds = json.loads(config["bigquery"]["adc"])
+credentials = Credentials.from_authorized_user_info(user_creds)
+
+# Construct a BigQuery client object with the user credentials
+bq_client = bigquery.Client(
+    credentials=credentials, project=user_creds["quota_project_id"]
+)
+
+bot_processed_tag = "bot_processed"
+payg_tag = "payg"
+user_found_tag = "user_found"
+not_found_tag = "user_not_found"
+db_address = config["bigquery"]["db_address"]
+blocked_tag = "blocked"
+pv_tag = "phone_verification"
+gitpod_admin_org_baseurl = "https://gitpod.io/admin/orgs"
+gitpod_admin_user_baseurl = "https://gitpod.io/admin/users"
+stripe_admin_customer_baseurl = "https://dashboard.stripe.com/customers"
 
 
 async def init() -> None:
@@ -62,7 +88,7 @@ async def post_zendesk_comment(
     ticket = zenpy_client.tickets(id=ticket_id)
     ticket.status = ustatus
     ticket.assignee_id = author_id
-    ticket.tags.extend(["bot_processed"] + atags)
+    ticket.tags.extend([bot_processed_tag] + atags)
     ticket.custom_fields.append(
         CustomField(id=config["zendesk"]["ticket_type_custom_id"], value=utype)
     )
@@ -108,18 +134,6 @@ async def webhook_handler(request: Request):
         # if webhook_data["group_id"] not in config["zendesk"]["trigger_group_ids"]:
         #     return web.Response(status=204)
 
-        # TODO: Use a service key
-        # service_key = json.loads(config["bigquery"]["service_key"])
-        # bq_client = bigquery.Client.from_service_account_info(service_key)
-        user_creds = json.loads(config["bigquery"]["adc"])
-        credentials = Credentials.from_authorized_user_info(user_creds)
-
-        # Construct a BigQuery client object with the user credentials
-        bq_client = bigquery.Client(
-            credentials=credentials, project=user_creds["quota_project_id"]
-        )
-
-        db_address = config["bigquery"]["db_address"]
         # inner_query = config["bigquery"]["user_info_sql"]
         inner_query = f"""
 SELECT
@@ -193,12 +207,77 @@ ORDER BY
         )
 
         rows = list(bq_client.query_and_wait(query))  # Make an API request.
-        not_found_tag = "user_not_found"
+
+        # Post stripe info
+        if rows and user_found_tag not in ticket_tags:
+            cmt_str = ""
+            user_obj = rows[0]
+
+            # Add admin user link
+            cmt_str += f"- User: [gitpod.io/admin]({gitpod_admin_user_baseurl}/{user_obj.userId})"
+
+            # Chunk rows and process each chunk
+            # This is needed because stripe doesn't allow more than 10 filters in one go
+            chunk_size = 9
+            all_stripe_responses = []
+            for chunk_start in range(0, len(rows), chunk_size):
+                chunk_rows = rows[chunk_start : chunk_start + chunk_size]
+
+                # Construct query string for this chunk
+                stripe_query_str = " OR ".join(
+                    [
+                        f"metadata['attributionId']:'team:{row.get('teamId', 'none')}'"
+                        for row in chunk_rows
+                    ]
+                )
+
+                if not all_stripe_responses:
+                    stripe_query_str += f" OR email:'{requester_email}'"
+
+                res = stripe_client.customers.search(
+                    params=CustomerService.SearchParams(
+                        limit=100, query=stripe_query_str
+                    )
+                ).to_dict_recursive()
+                all_stripe_responses.extend(res["data"])
+
+            # Go through orgIds
+            for row in rows:
+                if orgId := row.get("teamId"):
+                    orgName = row.get("teamName", "Undefined")
+
+                    cmt_str += (
+                        f"\n- Org: [{orgName}]({gitpod_admin_org_baseurl}/{orgId})"
+                    )
+
+                    # Find the matching ID and remove the corresponding customer from the search results
+                    for customer in all_stripe_responses[:]:
+                        if (
+                            customer.get("metadata", {}).get("attributionId")
+                            == f"team:{orgId}"
+                        ):
+                            cmt_str += f" | [[stripe]({stripe_admin_customer_baseurl}/{customer['id']})]"
+                            all_stripe_responses.remove(customer)
+                            break
+
+            # Go through remaining stripe customerIds that didn't match with any orgIds
+            for customer in all_stripe_responses:
+                customerName = customer.get("name", "Undefined")
+                cmt_str += f"\n- Email linked with Stripe: [{customerName}]({stripe_admin_customer_baseurl}/{customer['id']})"
+
+            # Finally, post an internal comment
+            # if cmt_str and user_found_tag not in ticket_tags:
+            ticket_obj.tags.extend([user_found_tag])
+            ticket_obj.comment = Comment(
+                body=cmt_str,
+                author_id=config["zendesk"]["community_author_id"],
+                public=False,
+            )
+            zenpy_client.tickets.update(ticket_obj)
 
         # If no userdata found
         if not rows:
             if not_found_tag not in ticket_tags:
-                ticket_obj = zenpy_client.tickets(id=ticket_id)
                 await post_zendesk_comment(
                     html_body=config["zendesk"]["templates"][not_found_tag],
                     ticket_id=ticket_id,
@@ -212,9 +291,13 @@ ORDER BY
             row["billingStrategy"] == "stripe" for row in rows
         )
 
+        # Add payg tag
+        if stripe_billing_strategy_exists:
+            ticket_obj.tags.extend([payg_tag])
+            zenpy_client.tickets.update(ticket_obj)
+
         if not stripe_billing_strategy_exists:
             # User is blocked
-            blocked_tag = "blocked"
             if user_obj.blocked == 1 and blocked_tag not in ticket_tags:
                 await post_zendesk_comment(
                     body=config["zendesk"]["templates"][blocked_tag],
@@ -249,7 +332,6 @@ ORDER BY
                         max_tokens=1,
                     )
                     targets = ai_response["choices"][0]["message"]["content"]
-                    pv_tag = "phone_verification"
 
                     if "true" in targets:
                         # TODO: This needs improvements
@@ -286,12 +368,6 @@ ORDER BY
                                 ustatus="pending",
                                 atags=[pv_tag],
                             )
-
-        # TODO: Ask to create a stripe read only api key
-
-        # print("The query data:")
-        # for row in rows:
-        #     print(row.userId)
 
         return web.Response(status=200)
 
