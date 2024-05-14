@@ -65,6 +65,7 @@ if test ! -e "${private_key}"; then {
 
 ssh_cmd=(
 	ssh -i "${private_key}"
+ 	-o LogLevel=ERROR
 	-o UserKnownHostsFile=/dev/null
 	-o StrictHostKeyChecking=no
 	"${SSH_LOGIN}"
