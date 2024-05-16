@@ -298,13 +298,14 @@ ORDER BY
 
         if not stripe_billing_strategy_exists:
             # User is blocked
-            if user_obj.blocked == 1 and blocked_tag not in ticket_tags:
-                await post_zendesk_comment(
-                    body=config["zendesk"]["templates"][blocked_tag],
-                    ticket_id=ticket_id,
-                    atags=[blocked_tag],
-                    ustatus="pending",
-                )
+            if user_obj.blocked == 1:
+                if blocked_tag not in ticket_tags:
+                    await post_zendesk_comment(
+                        body=config["zendesk"]["templates"][blocked_tag],
+                        ticket_id=ticket_id,
+                        atags=[blocked_tag],
+                        ustatus="pending",
+                    )
 
             # User has not verified yet
             elif not user_obj.lastVerificationTime:
