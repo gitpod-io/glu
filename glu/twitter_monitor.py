@@ -76,6 +76,9 @@ async def post_on_slack(new_tweets):
             tweet_type = tweet["referenced_tweets"][0]["type"]
         is_retweet = tweet_type == "retweeted"
 
+        # Delay by 2 seconds
+        await asyncio.sleep(2)
+
         if not is_retweet:
             if mentions_gitpod:
                 await send_slack_msg(tweet["url"], all_channel)
