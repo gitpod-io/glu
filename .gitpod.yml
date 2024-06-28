@@ -2,23 +2,17 @@ image:
   file: .gitpod.Dockerfile
 
 tasks:
-  - name: Install deps and enter shell
-    command: |
-      poetry install
-      poetry shell
-
-  - name: Setup gh auth and pull ProdBotConfig.toml
+  - name: Doppler login
     command: |
       printf "\033[3J\033c\033[3J"
 
-      if token="$(printf '%s\n' "host=github.com" | gp credential-helper get | awk -F'password=' '{print $2}')"; then {
-          printf "${token}" | gh auth login --with-token
-          gh api /repos/gitpod-io/glu/actions/variables \
-              | jq -r '.variables[] | select(.name == "CONFIG_BASE64") | .value' \
-              | base64 -d > ProdBotConfig.toml
-          gp open ProdBotConfig.toml & disown
-      } fi
+       printf '%s\n' "${DOPPLER_TOKEN}" | doppler configure set token --scope "${GITPOD_REPO_ROOT}"
 
       printf '• %s\n' \
-        "You can modify the ${GITPOD_REPO_ROOT}/ProdBotConfig.toml config file as needed" \
-        "And, to push the new config to the prod server, run \`${GITPOD_REPO_ROOT:-.}/scripts/deploy_gitpod.sh\`"
+        "To update the values of ${GITPOD_REPO_ROOT}/ProdBotConfig.toml go to ${DOPPLER_URL}"
+
+  - name: Install deps and enter shell
+    command: |
+      printf "\033[3J\033c\033[3J"
+      poetry install
+      poetry run $SHELL -ic "printf '• %s\n' 'Run this command to start bot:' 'doppler run --config main --mount BotConfig.toml --mount-template BotConfig_tmpl.toml -- poetry run python3 -m glu'"

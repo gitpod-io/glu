@@ -4,6 +4,4 @@ RUN pyenv install 3.11 \
     && pyenv global 3.11
 
 # Install gh CLI
-RUN cd /tmp \
-    && curl -L "https://github.com/cli/cli/releases/download/v2.32.0/gh_2.32.0_linux_amd64.tar.gz" -o gh.tar.gz \
-    && tar -xpf gh.tar.gz && sudo mv gh_*linux_amd64/bin/gh /usr/bin/gh
+RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sudo sh
