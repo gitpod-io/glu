@@ -7,7 +7,7 @@ tasks:
       printf "\033[3J\033c\033[3J"
       printf '%s\n' "${DOPPLER_TOKEN}" | doppler configure set token --scope "${GITPOD_REPO_ROOT}"
       printf '• %s\n' \
-        "To update the values of ${GITPOD_REPO_ROOT}/ProdBotConfig.toml go to ${DOPPLER_URL}"
+        "To modify ${GITPOD_REPO_ROOT}/BotConfig_tmpl.toml go to ${DOPPLER_URL} and update the `main` branch for development purposes"
 
   - name: Install deps and enter shell
     command: |
