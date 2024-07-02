@@ -10,5 +10,5 @@ Open the repo in Gitpod. There will be instructions in the terminal on how to ru
 
 # How to deploy
 
-Open the following workflow link and click on `Run workflow`:
+This bot is automaticaly deployed to prod for commits pushed to `main` branch. If you need to manually trigger a deploy after updating the config on Doppler, open the following workflow link and click on `Run workflow`:
 - https://github.com/gitpod-io/glu/actions/manual?workflow=.github%2Fworkflows%2Fdeploy.yaml
