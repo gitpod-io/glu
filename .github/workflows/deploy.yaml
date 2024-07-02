@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+  repository_dispatch:
+    types:
+      - doppler
+
 jobs:
   deploy:
     runs-on: ubuntu-22.04
