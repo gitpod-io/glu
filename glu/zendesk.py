@@ -120,6 +120,8 @@ async def webhook_handler(request: Request):
         requester_email = (
             ticket_obj.requester.email or ticket_obj.via.source.from_["address"]
         )
+        if requester_email == "support@twitter.com":
+            return web.Response(status=204)
         ticket_tags = list(ticket_obj.tags)
         # requester_email = webhook_data.get("requester", {}).get(
         #     "email"
