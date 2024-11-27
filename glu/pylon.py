@@ -51,10 +51,23 @@ async def sidebar(request: web.Request):
 
         if request.query.get("request_type") != "fetch_data":
             return web.Response(status=204)
+
+        response_data = {
+            "version": "1.0.0",
+            "header": {
+                "title": "Gitpod.io",
+                "icon_url": "https://www.gitpod.io/images/media-kit/logo-mark.png",
+            },
+            "components": [],
+        }
+
         issue_id = request.query["issue_id"]
-        print(request.query["requester_id"])
         requester_email = request.query["requester_email"]
         ticket_tags = []
+        print(issue_id)
+
+        if requester_email == "":
+            return web.json_response(response_data, status=200)
 
         if requester_email == "support@twitter.com":
             return web.Response(status=204)
@@ -131,14 +144,6 @@ ORDER BY
         )
 
         rows = list(bq_client.query_and_wait(query))  # Make an API request.
-        response_data = {
-            "version": "1.0.0",
-            "header": {
-                "title": "Gitpod.io",
-                "icon_url": "https://www.gitpod.io/images/media-kit/logo-mark.png",
-            },
-            "components": [],
-        }
         cmt_str = ""
 
         # Post stripe info
