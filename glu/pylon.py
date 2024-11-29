@@ -7,72 +7,41 @@ import json
 import sys
 from traceback import print_exc as traceback_print_exc
 from aiohttp import web
-from zenpy import Zenpy
 from stripe import CustomerService, StripeClient
-
 from glu import utils
 from glu.config_loader import config
 from glu.openai_client import openai
 from google.cloud import bigquery
 from google.oauth2.credentials import Credentials
-from zenpy.lib.api_objects import Comment, CustomField
 from typing import List
 
 
 stripe_client = StripeClient(config["stripe"]["api_key"])
-
-# TODO: Use a service key
-# service_key = json.loads(config["bigquery"]["service_key"])
-# bq_client = bigquery.Client.from_service_account_info(service_key)
-user_creds = json.loads(config["bigquery"]["adc"])
-credentials = Credentials.from_authorized_user_info(user_creds)
-
-# Construct a BigQuery client object with the user credentials
-bq_client = bigquery.Client(
-    credentials=credentials, project=user_creds["quota_project_id"]
-)
+stripe_admin_customer_baseurl = "https://dashboard.stripe.com/customers"
 
 bot_processed_tag = "bot_processed"
 payg_tag = "payg"
 user_found_tag = "user_found"
 not_found_tag = "user_not_found"
-db_address = config["bigquery"]["db_address"]
 blocked_tag = "blocked"
 pv_tag = "phone_verification"
 gitpod_admin_org_baseurl = "https://gitpod.io/admin/orgs"
 gitpod_admin_user_baseurl = "https://gitpod.io/admin/users"
-stripe_admin_customer_baseurl = "https://dashboard.stripe.com/customers"
+
+# TODO: Use a service key
+# service_key = json.loads(config["bigquery"]["service_key"])
+# bq_client = bigquery.Client.from_service_account_info(service_key)
+bq_user_creds = json.loads(config["bigquery"]["adc"])
+bq_credentials = Credentials.from_authorized_user_info(bq_user_creds)
+# Construct a BigQuery client object with the user credentials
+db_address = config["bigquery"]["db_address"]
+bq_client = bigquery.Client(
+    credentials=bq_credentials, project=bq_user_creds["quota_project_id"]
+)
 
 
-async def sidebar(request: web.Request):
-    try:
-        if request.query.get("request_type") == "verify":
-            return web.json_response({"code": request.query["code"]}, status=200)
-
-        if request.query.get("request_type") != "fetch_data":
-            return web.Response(status=204)
-
-        response_data = {
-            "version": "1.0.0",
-            "header": {
-                "title": "Gitpod.io",
-                "icon_url": "https://www.gitpod.io/images/media-kit/logo-mark.png",
-            },
-            "components": [],
-        }
-
-        issue_id = request.query["issue_id"]
-        requester_email = request.query["requester_email"]
-        ticket_tags = []
-        print(issue_id)
-
-        if requester_email == "":
-            return web.json_response(response_data, status=200)
-
-        if requester_email == "support@twitter.com":
-            return web.Response(status=204)
-
-        inner_query = f"""
+async def fetch_data_from_mysql(requester_email: str):
+    inner_query = f"""
 SELECT
   sub.userId,
   sub.teamId,
@@ -131,19 +100,50 @@ ON
 ORDER BY
   sub.LastModified DESC
 """
-        nn_inner_query = " ".join(inner_query.splitlines())  # remove newlines
+    nn_inner_query = " ".join(inner_query.splitlines())  # remove newlines
 
-        # # There is an `@email` parameter in `inner_query`
-        # job_config = bigquery.QueryJobConfig(
-        #     query_parameters=[
-        #         bigquery.ScalarQueryParameter("email", "STRING", requester_email),
-        #     ]
-        # )
-        query = (
-            f""" SELECT * FROM EXTERNAL_QUERY("{db_address}", "{nn_inner_query}"); """
-        )
+    # # There is an `@email` parameter in `inner_query`
+    # job_config = bigquery.QueryJobConfig(
+    #     query_parameters=[
+    #         bigquery.ScalarQueryParameter("email", "STRING", requester_email),
+    #     ]
+    # )
+    query = f""" SELECT * FROM EXTERNAL_QUERY("{db_address}", "{nn_inner_query}"); """
 
-        rows = list(bq_client.query_and_wait(query))  # Make an API request.
+    rows = list(bq_client.query_and_wait(query))  # Make an API request.
+    return rows
+
+
+async def sidebar(request: web.Request):
+    try:
+        if request.query.get("request_type") == "verify":
+            print(f"Verification request received: {request.query['code']}")
+            return web.json_response({"code": request.query["code"]}, status=200)
+
+        if request.query.get("request_type") != "fetch_data":
+            return web.Response(status=204)
+
+        response_data = {
+            "version": "1.0.0",
+            "header": {
+                "title": "Gitpod.io",
+                "icon_url": "https://www.gitpod.io/images/media-kit/logo-mark.png",
+            },
+            "components": [],
+        }
+
+        issue_id = request.query["issue_id"]
+        requester_email = request.query["requester_email"]
+        ticket_tags = []
+        print(issue_id)
+
+        if requester_email == "":
+            return web.json_response(response_data, status=200)
+
+        if requester_email == "support@twitter.com":
+            return web.Response(status=204)
+
+        rows = await fetch_data_from_mysql(requester_email)  # Make an API request.
         cmt_str = ""
 
         # Post stripe info
