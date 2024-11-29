@@ -7,13 +7,14 @@ import json
 import sys
 from traceback import print_exc as traceback_print_exc
 from aiohttp import web
+import requests
 from stripe import CustomerService, StripeClient
 from glu import utils
 from glu.config_loader import config
 from glu.openai_client import openai
 from google.cloud import bigquery
 from google.oauth2.credentials import Credentials
-from typing import List
+from typing import List, Optional
 
 
 stripe_client = StripeClient(config["stripe"]["api_key"])
@@ -22,7 +23,7 @@ stripe_admin_customer_baseurl = "https://dashboard.stripe.com/customers"
 bot_processed_tag = "bot_processed"
 payg_tag = "payg"
 user_found_tag = "user_found"
-not_found_tag = "user_not_found"
+user_not_found_tag = "user_not_found"
 blocked_tag = "blocked"
 pv_tag = "phone_verification"
 gitpod_admin_org_baseurl = "https://gitpod.io/admin/orgs"
@@ -134,8 +135,7 @@ async def sidebar(request: web.Request):
 
         issue_id = request.query["issue_id"]
         requester_email = request.query["requester_email"]
-        ticket_tags = []
-        print(issue_id)
+        print(f"CustomApp invocation: {issue_id}")
 
         if requester_email == "":
             return web.json_response(response_data, status=200)
@@ -147,20 +147,25 @@ async def sidebar(request: web.Request):
         cmt_str = ""
 
         # Post stripe info
-        if rows and user_found_tag not in ticket_tags:
+        if rows:
             user_obj = rows[0]
 
             # Indicate whether the user is subscribed
+            user_plan = "FREE"
+            user_plan_color = "green"
             if any(row["billingStrategy"] == "stripe" for row in rows):
-                response_data["components"].append(
-                    {
-                        "type": "badge",
-                        "label": "Plan",
-                        "items": [
-                            {"value": "PAYG", "color": "orange"},
-                        ],
-                    },
-                )
+                user_plan = "PAYG"
+                user_plan_color = "orange"
+
+            response_data["components"].append(
+                {
+                    "type": "badge",
+                    "label": "Plan",
+                    "items": [
+                        {"value": user_plan, "color": user_plan_color},
+                    ],
+                },
+            )
 
             # Show userId
             response_data["components"].append(
@@ -282,8 +287,99 @@ async def sidebar(request: web.Request):
         return web.Response(status=500)
 
 
+class PylonAPIWrapper:
+    def __init__(self, base_url, headers):
+        """
+        Initialize the API wrapper with the base URL and headers.
+
+        :param base_url: Base URL for the Pylon API.
+        :param headers: Headers to include in API requests.
+        """
+        self.base_url = base_url
+        self.headers = headers
+
+    def get_ticket(self, issue_id: str):
+        """
+        Fetch ticket details by issue ID.
+
+        :param issue_id: The ID of the issue to fetch.
+        :return: A dictionary containing ticket data.
+        """
+        response = requests.get(
+            f"{self.base_url}/issues/{issue_id}", headers=self.headers
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def update_ticket(
+        self, issue_id: str, tags: List[str], state: Optional[str] = None
+    ):
+        """
+        Update the tags and optionally the state of a ticket.
+
+        :param issue_id: The ID of the issue to update.
+        :param tags: A list of tags to update the ticket with.
+        :param state: Optional. The state to update the ticket to. If not provided, the current state of the ticket is used.
+        :return: The updated ticket as a JSON response.
+        """
+        # Fetch the existing ticket
+        ticket = self.get_ticket(issue_id)
+        existing_tags = ticket["data"]["tags"]
+
+        # Use the current state if no custom state is provided
+        if state is None:
+            state = ticket["data"]["state"]
+
+        # Update the ticket
+        response = requests.patch(
+            f"{self.base_url}/issues/{issue_id}",
+            headers=self.headers,
+            json={"tags": existing_tags + tags, "state": state},
+        )
+        response.raise_for_status()
+        return response.json()
+
+
+pylon = PylonAPIWrapper(
+    base_url="https://api.usepylon.com",
+    headers={
+        "Authorization": config["pylon"]["bearer_token"],
+    },
+)
+
+
 async def webhook(request: web.Request):
     try:
+        data = await request.json()
+        issue_id = data["issue_id"]
+        requester_email = data["requester_email"]
+        ticket = pylon.get_ticket(issue_id)
+        ticket_tags = ticket["data"]["tags"]
+        rows = await fetch_data_from_mysql(requester_email)  # Make an API request.
+        print(f"Webhook: {issue_id}")
+
+        # TODO: Check if we need to assert if the issue is newly created too after migration
+        if rows and user_found_tag not in ticket_tags:
+            user_obj = rows[0]
+            tags_to_add = [user_found_tag]
+            # state = None
+            stripe_billing_strategy_exists = any(
+                row["billingStrategy"] == "stripe" for row in rows
+            )
+            if stripe_billing_strategy_exists:
+                tags_to_add.append(payg_tag)
+            elif user_obj.blocked == 1 and blocked_tag not in ticket_tags:
+                # state = "closed"
+                tags_to_add.append(blocked_tag)
+                tags_to_add.append(bot_processed_tag)
+
+            # TODO: Migrate phone verfication flow?
+            pylon.update_ticket(issue_id=issue_id, tags=tags_to_add)
+
+        if not rows:
+            if user_not_found_tag not in ticket_tags:
+                pylon.update_ticket(issue_id=issue_id, tags=[user_not_found_tag])
+
         return web.Response(status=200)
 
     except Exception:
