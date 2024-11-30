@@ -78,3 +78,6 @@ token = "{{.GITPOD_TOKEN}}"
 
 [stripe]
 api_key = "{{.STRIPE_API_KEY}}"
+
+[pylon]
+bearer_token = "{{.PYLON_BEARER_TOKEN}}"
