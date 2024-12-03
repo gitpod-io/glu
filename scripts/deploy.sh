@@ -27,7 +27,7 @@ Description=Glu Bot
 After=network.target
 
 [Service]
-Environment=HOME='/root'
+Environment=HOME='/root' PATH='/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'
 ExecStartPre=sh -c 'git reset --hard && git pull --ff'
 ExecStart=doppler run --mount BotConfig.toml --mount-template BotConfig_tmpl.toml --mount-max-reads 1 -- uv run python3 -m glu
 Restart=always
