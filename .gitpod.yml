@@ -11,10 +11,9 @@ tasks:
 
   - name: Install deps and enter shell
     command: |
-      poetry install
       printf "\033[3J\033c\033[3J"
       printf '• %s\n' \
         'Run this command to start bot:' \
-        'doppler run --config main --mount BotConfig.toml --mount-template BotConfig_tmpl.toml -- poetry run python3 -m glu'
+        'doppler run --config main --mount BotConfig.toml --mount-template BotConfig_tmpl.toml -- uv run python3 -m glu'
       
-      poetry shell -q
+      uv run $SHELL
