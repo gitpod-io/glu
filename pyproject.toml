@@ -18,6 +18,7 @@ dependencies = [
     "slack-sdk>=3.33.4",
     "snscrape>=0.7.0.20230622",
     "stripe>=11.3.0",
+    "zenpy>=2.0.56",
 ]
 
 # [build-system]
