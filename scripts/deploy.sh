@@ -28,8 +28,8 @@ After=network.target
 
 [Service]
 Environment=HOME='/root'
-ExecStartPre=sh -c 'git reset --hard && git pull --ff && poetry install'
-ExecStart=doppler run --mount BotConfig.toml --mount-template BotConfig_tmpl.toml --mount-max-reads 1 -- poetry run python3 -m glu
+ExecStartPre=sh -c 'git reset --hard && git pull --ff'
+ExecStart=doppler run --mount BotConfig.toml --mount-template BotConfig_tmpl.toml --mount-max-reads 1 -- uv run python3 -m glu
 Restart=always
 WorkingDirectory=${app_dir}
 
@@ -50,7 +50,7 @@ EOF
 	systemctl enable "${systemd_service_name}"
 
 	systemctl stop "${systemd_service_name}"
- 	rm -f "${app_dir}/BotConfig.toml"
+	rm -f "${app_dir}/BotConfig.toml"
 	pkill -9 doppler || true
 	systemctl start "${systemd_service_name}"
 }
@@ -65,7 +65,7 @@ if test ! -e "${private_key}"; then {
 
 ssh_cmd=(
 	ssh -i "${private_key}"
- 	-o LogLevel=ERROR
+	-o LogLevel=ERROR
 	-o UserKnownHostsFile=/dev/null
 	-o StrictHostKeyChecking=no
 	"${SSH_LOGIN}"
