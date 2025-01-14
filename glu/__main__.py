@@ -6,7 +6,9 @@ from aiohttp.web_request import Request
 from cachetools import LRUCache
 from gidgethub import aiohttp as gh_aiohttp, routing, sansio
 from gidgethub.apps import get_installation_access_token, get_jwt
-from glu import pylon, zendesk
+from glu import pylon
+
+# from glu import zendesk
 import glu.events as event
 from glu.config_loader import config
 from glu import runtime_constants
@@ -65,7 +67,7 @@ async def main():
     # await zendesk.init()
     app = web.Application()
     app.router.add_post("/", github_payloads)
-    app.router.add_post("/zendesk", zendesk.webhook_handler)
+    # app.router.add_post("/zendesk", zendesk.webhook_handler)
     app.router.add_post("/pylon", pylon.webhook)
     app.router.add_get("/pylon/sidebar", pylon.sidebar)
     port = int(config["server"].get("port", 8000))
@@ -75,10 +77,20 @@ async def main():
     await runner.setup()
     site = web.TCPSite(runner, host, port)
 
-    await asyncio.gather(
-        twitter_run(),
-        site.start(),
-    )
+    await site.start()
+
+    try:
+        print(f"Server started at http://{host}:{port}")
+        await asyncio.Event().wait()  # Keep the server running indefinitely
+    except KeyboardInterrupt:
+        print("Shutting down the server...")
+    finally:
+        await runner.cleanup()
+
+    # await asyncio.gather(
+    #     twitter_run(),
+    #     site.start(),
+    # )
 
 
 if __name__ == "__main__":
