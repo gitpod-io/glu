@@ -115,8 +115,16 @@ ORDER BY
     return rows
 
 
+async def verify_secret(request: web.Request) -> bool:
+    secret_header = request.headers.get("secret", "")
+    return config["pylon"]["webhook_secret"] == secret_header
+
+
 async def sidebar(request: web.Request):
     try:
+        if not await verify_secret(request):
+            return web.json_response(status=400)
+
         if request.query.get("request_type") == "verify":
             print(f"Verification request received: {request.query['code']}")
             return web.json_response({"code": request.query["code"]}, status=200)
@@ -350,6 +358,9 @@ pylon = PylonAPIWrapper(
 
 async def webhook(request: web.Request):
     try:
+        if not await verify_secret(request):
+            return web.json_response(status=400)
+
         data = await request.json()
         issue_id = data["issue_id"]
         requester_email = data["requester_email"]

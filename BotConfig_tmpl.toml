@@ -81,3 +81,5 @@ api_key = "{{.STRIPE_API_KEY}}"
 
 [pylon]
 bearer_token = "{{.PYLON_BEARER_TOKEN}}"
+webhook_secret = "{{.PYLON_WEBHOOK_SECRET}}"
+
